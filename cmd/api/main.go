@@ -2,10 +2,9 @@ package main
 
 import (
 	"net/http"
+	"twitch_chat_analysis/pkg/queue"
 
-	"github.com/Clarilab/gorabbitmq/v4"
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 )
 
 // Request is used to publish a message on the rabbitMQ.
@@ -15,7 +14,7 @@ type Request struct {
 }
 
 func main() {
-	queue, err := initializeQueue()
+	queue, err := queue.InitializeQueue()
 	if err != nil {
 		panic(err)
 	}
@@ -45,46 +44,4 @@ func main() {
 	})
 
 	println(r.Run().Error())
-}
-
-const (
-	queueName        = "message-queue" // name for the queue
-	rabbitMQUser     = "user"          // name from docker-compose.yml
-	rabbitMQPassword = "password"      // pw from docker-compose.yml
-	rabbitMQHost     = "localhost"     // change when not running on localhost
-	rabbitMQPort     = 7001            // port from docker-compose.yml
-)
-
-func initializeQueue() (gorabbitmq.Queue, error) {
-	connectionSettings := gorabbitmq.ConnectionSettings{
-		UserName: rabbitMQUser,
-		Password: rabbitMQPassword,
-		Host:     rabbitMQHost,
-		Port:     rabbitMQPort,
-	}
-
-	channelSettings := gorabbitmq.ChannelSettings{
-		UsePrefetch:   false,
-		PrefetchCount: 0,
-	}
-
-	qConnector, err := gorabbitmq.NewConnection(connectionSettings, channelSettings)
-	if err != nil {
-		return nil, errors.Wrap(err, "could not connect to new queue")
-	}
-
-	queueSettings := gorabbitmq.QueueSettings{
-		QueueName:        queueName, // "ExampleQueueName"
-		Durable:          true,
-		DeleteWhenUnused: false,
-		Exclusive:        false,
-		NoWait:           false,
-	}
-
-	q, err := qConnector.ConnectToQueue(queueSettings)
-	if err != nil {
-		return nil, errors.Wrap(err, "could not connect to queue")
-	}
-
-	return q, nil
 }
