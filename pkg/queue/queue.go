@@ -1,7 +1,7 @@
 package queue
 
 import (
-	"github.com/Clarilab/gorabbitmq/v4"
+	"github.com/Wr4thon/gorabbitmq"
 	"github.com/pkg/errors"
 )
 

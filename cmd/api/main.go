@@ -2,16 +2,11 @@ package main
 
 import (
 	"net/http"
+	"twitch_chat_analysis/pkg/domain"
 	"twitch_chat_analysis/pkg/queue"
 
 	"github.com/gin-gonic/gin"
 )
-
-// Request is used to publish a message on the rabbitMQ.
-type Request struct {
-	Sender  string `json:"sender" binding:"required"`
-	Message string `json:"message" binding:"required"`
-}
 
 func main() {
 	queue, err := queue.InitializeQueue()
@@ -26,15 +21,15 @@ func main() {
 	})
 
 	r.POST("/message", func(c *gin.Context) {
-		var request Request
+		var payload domain.Message
 
-		err := c.Bind(&request)
+		err := c.Bind(&payload)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		err = queue.Send(c, request)
+		err = queue.Send(payload)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
