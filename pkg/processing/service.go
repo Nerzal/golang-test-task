@@ -1,15 +1,17 @@
 package processing
 
 import (
+	"context"
 	"encoding/json"
+	"time"
 	"twitch_chat_analysis/pkg/domain"
 
 	"github.com/Noobygames/amqp"
-	"github.com/go-redis/redis"
 	"github.com/pkg/errors"
+	"github.com/redis/go-redis/v9"
 )
 
-const redisKey = "twitch_chat_analysis"
+const redisKey = "twitch_chat_analysis_sorted_set"
 
 // Service provides message processing capabilities.
 type Service struct {
@@ -37,7 +39,9 @@ func (s *Service) Consume(delivery amqp.Delivery) error {
 		return errors.Wrap(err, errMessage)
 	}
 
-	err = s.handleMessage(message)
+	ctx := context.TODO()
+
+	err = s.handleMessage(ctx, message)
 	if err != nil {
 		nackErr := delivery.Nack(false, true) // failed to handle message, requeue
 		if err != nil {
@@ -55,10 +59,14 @@ func (s *Service) Consume(delivery amqp.Delivery) error {
 	return nil
 }
 
-func (s *Service) handleMessage(message domain.Message) error {
+func (s *Service) handleMessage(ctx context.Context, message domain.Message) error {
 	const errMessage = "could not push to redis"
 
-	cmd := s.redisClient.LPush(redisKey, message)
+	cmd := s.redisClient.ZAdd(
+		ctx, redisKey,
+		redis.Z{Score: float64(time.Now().Unix()), Member: message},
+	)
+
 	_, err := cmd.Result()
 	if err != nil {
 		return errors.Wrap(err, errMessage)

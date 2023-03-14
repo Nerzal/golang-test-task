@@ -7,10 +7,10 @@ import (
 	"twitch_chat_analysis/pkg/domain"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis"
+	"github.com/redis/go-redis/v9"
 )
 
-const redisKey = "twitch_chat_analysis"
+const redisKey = "twitch_chat_analysis_sorted_set"
 
 func main() {
 	// setup redis
@@ -24,7 +24,7 @@ func main() {
 	r := gin.Default()
 
 	r.GET("/message/list", func(c *gin.Context) {
-		cmd := redisClient.LRange(redisKey, 0, -1)
+		cmd := redisClient.ZRevRange(c, redisKey, 0, -1)
 		listEntries, err := cmd.Result()
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

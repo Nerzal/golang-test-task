@@ -6,7 +6,7 @@ import (
 	"twitch_chat_analysis/pkg/queue"
 
 	"github.com/Wr4thon/gorabbitmq"
-	"github.com/go-redis/redis"
+	"github.com/redis/go-redis/v9"
 )
 
 func main() {
